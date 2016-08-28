@@ -27,6 +27,8 @@ _stuff/
 *.exe
 # Permit the compiled game itself to be committed.
 !dist/*.exe
+# Permit cwsdpmi.exe to be distributed along with the code.
+!static/cwsdpmi.exe
 *.out
 *.app
 *.i*86

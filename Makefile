@@ -10,30 +10,41 @@ BIN       = main.exe
 SRCDIR    = src
 OBJDIR    = obj
 DISTDIR   = dist
+STATICDIR = static
+
+# Static files, e.g. the readme.txt file, that get copied straight to
+# the dist directory.
+STATIC    = $(shell find $(STATICDIR) -name "*.*" -not -name ".*" 2> /dev/null)
+STATICDEST= $(subst $(STATICDIR),$(DISTDIR),$(STATIC))
 
 # All source files (*.c) and their corresponding object files.
 SRC       = $(shell find $(SRCDIR) -name "*.c" 2> /dev/null)
 OBJS      = $(SRC:%.c=%.o)
 
-.PHONY: clean dir
+.PHONY: clean static
 default: all
 
-check_djgpp:
-	@if [ -z "$$DJGPP_CC" ]; then \
-        echo "To compile, you'll need to set the DJGPP_CC environment variable to a DJGPP GCC binary, e.g. /usr/local/djgpp/bin/i586-pc-msdosdjgpp-gcc"; \
-        exit 2; \
-	fi
+# Check whether DJGPP is available.
+ifndef DJGPP_CC
+  $(error To compile, you'll need to set the DJGPP_CC environment variable to a DJGPP GCC binary, e.g. /usr/local/djgpp/bin/i586-pc-msdosdjgpp-gcc)
+endif
 
-dir:
-	@mkdir -p ${DISTDIR}
+${DISTDIR}:
+	mkdir -p ${DISTDIR}
 
-%.o: %.c | check_djgpp
+%.o: %.c
 	${CC} -c -o $@ $? ${CFLAGS}
 
-${DISTDIR}/${BIN}: ${OBJS} | check_djgpp
+${DISTDIR}/${BIN}: ${OBJS}
 	${CC} -o ${DISTDIR}/${BIN} $+ ${LDFLAGS}
 
-all: dir ${DISTDIR}/${BIN}
+${STATICDEST}:
+	@mkdir -p $(shell dirname $@)
+	cp $(subst $(DISTDIR),$(STATICDIR),$@) $@
+
+all: ${DISTDIR} ${DISTDIR}/${BIN} ${STATICDEST}
+
+static: ${STATICDEST}
 
 clean:
 	rm -rf ${DISTDIR}
